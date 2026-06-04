@@ -36,6 +36,8 @@ export const createPost = async (req, res) => {
         await newPostMessage.save();
 
         res.status(201).json(newPostMessage );
+        const io = req.app.get('io');
+        if (io) io.emit('postCreated', newPostMessage);
     } catch (error) {
         res.status(409).json({ message: error.message });
     }
@@ -49,9 +51,11 @@ export const updatePost = async (req, res) => {
 
     const updatedPost = { creator, title, message, tags, selectedFile, _id: id };
 
-    await PostMessage.findByIdAndUpdate(id, updatedPost, { new: true });
+    const result = await PostMessage.findByIdAndUpdate(id, updatedPost, { new: true });
 
-    res.json(updatedPost);
+    res.json(result);
+    const io = req.app.get('io');
+    if (io) io.emit('postUpdated', result);
 }
 
 export const deletePost = async (req, res) => {
@@ -62,6 +66,8 @@ export const deletePost = async (req, res) => {
     await PostMessage.findByIdAndRemove(id);
 
     res.json({ message: "Post deleted successfully." });
+    const io = req.app.get('io');
+    if (io) io.emit('postDeleted', id);
 }
 
 export const likePost = async (req, res) => {
@@ -74,6 +80,8 @@ export const likePost = async (req, res) => {
     const updatedPost = await PostMessage.findByIdAndUpdate(id, { likeCount: post.likeCount + 1 }, { new: true });
     
     res.json(updatedPost);
+    const io = req.app.get('io');
+    if (io) io.emit('postLiked', updatedPost);
 }
 
 

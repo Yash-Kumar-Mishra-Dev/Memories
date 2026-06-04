@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Container, AppBar, Typography, Grow, Grid } from '@material-ui/core';
 import { useDispatch } from 'react-redux';
+// eslint-disable-next-line import/no-unresolved
+import { io } from 'socket.io-client';
+import { CREATE, UPDATE, DELETE, LIKE } from './constants/actionTypes';
 
 import Posts from './components/Posts/Posts';
 import Form from './components/Form/Form';
@@ -15,6 +18,21 @@ const App = () => {
 
   useEffect(() => {
     dispatch(getPosts());
+
+    const socket = io('http://localhost:5000');
+
+    socket.on('postCreated', (post) => dispatch({ type: CREATE, payload: post }));
+    socket.on('postUpdated', (post) => dispatch({ type: UPDATE, payload: post }));
+    socket.on('postDeleted', (id) => dispatch({ type: DELETE, payload: id }));
+    socket.on('postLiked', (post) => dispatch({ type: LIKE, payload: post }));
+
+    const onFocus = () => dispatch(getPosts());
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      socket.disconnect();
+      window.removeEventListener('focus', onFocus);
+    };
   }, [currentId, dispatch]);
 
   return (
